@@ -78,23 +78,56 @@ func Filter(songs []Song, f func(Song) bool) []Song {
 }
 
 func main() {
-songType := graphql.NewObject(graphql.ObjectConfig{
-   Name: "Song",
-   Fields: graphql.Fields{
-      "id": &graphql.Field{
-         Type: graphql.String,
+   albumType := graphql.NewObject(graphql.ObjectConfig{
+       Name: "Album",
+       Fields: graphql.Fields{
+           "id": &graphql.Field{
+               Type: graphql.String,
+           },
+           "artist": &graphql.Field{
+               Type: graphql.String,
+           },
+           "title": &graphql.Field{
+               Type: graphql.String,
+           },
+           "year": &graphql.Field{
+               Type: graphql.String,
+           },
+           "genre": &graphql.Field{
+               Type: graphql.String,
+           },
+           "type": &graphql.Field{
+               Type: graphql.String,
+           },
+       },
+   })
+
+   songType := graphql.NewObject(graphql.ObjectConfig{
+      Name: "Song",
+      Fields: graphql.Fields{
+         "id": &graphql.Field{
+            Type: graphql.String,
+         },
+         "album": &graphql.Field{
+            Type: albumType,
+            Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+                song := params.Source.(Song)
+                for _, album := range albums {
+                    if album.ID == song.Album {
+                        return album, nil
+                    }
+                }
+                return nil, nil
+            },
+         },
+         "title": &graphql.Field{
+            Type: graphql.String,
+         },
+         "duration": &graphql.Field{
+            Type: graphql.String,
+         },
       },
-      "album": &graphql.Field{
-         Type: graphql.String,
-      },
-      "title": &graphql.Field{
-         Type: graphql.String,
-      },
-      "duration": &graphql.Field{
-         Type: graphql.String,
-      },
-   },
-})
+   })
 
 /*
 artistType := graphql.NewObject(graphql.ObjectConfig{
@@ -113,33 +146,33 @@ artistType := graphql.NewObject(graphql.ObjectConfig{
 })
 */
 
-albumType := graphql.NewObject(graphql.ObjectConfig{
-    Name: "Album",
-    Fields: graphql.Fields{
-        "id": &graphql.Field{
-            Type: graphql.String,
-        },
-        "artist": &graphql.Field{
-            Type: graphql.String,
-        },
-        "title": &graphql.Field{
-            Type: graphql.String,
-        },
-        "year": &graphql.Field{
-            Type: graphql.String,
-        },
-        "genre": &graphql.Field{
-            Type: graphql.String,
-        },
-        "type": &graphql.Field{
-            Type: graphql.String,
-        },
-    },
-})
-
 rootQuery := graphql.NewObject(graphql.ObjectConfig{
    Name: "Query",
    Fields: graphql.Fields{
+      "song": &graphql.Field{
+          Type: songType,
+          Args: graphql.FieldConfigArgument{
+              "album": &graphql.ArgumentConfig{
+                  Type: graphql.NewNonNull(graphql.String),
+              },
+          },
+          Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+              albumId := params.Args["album"].(string)
+              var currentSong Song
+              for _, song := range songs {
+                  if song.Album == albumId {
+                      currentSong = song
+                  }
+              }
+              for _, album := range albums {
+                  if album.ID == albumId {
+                      currentSong.Album = album.Title
+                  }
+              }
+              return currentSong, nil
+          },
+      },
+
       "songs": &graphql.Field{
          Type: graphql.NewList(songType),
          Args: graphql.FieldConfigArgument{
