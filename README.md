@@ -1,3 +1,9 @@
+### song
+oSELECT * FROM songs
+JOIN album ON songs.album = album.id
+WHERE songs.album = {album_id}```
+```
+
 ### test command
 ```
 http://localhost:10080/notify/graphql?query={songs(album: "ts-fearless"){title,duration}}
