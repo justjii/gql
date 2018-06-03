@@ -7,6 +7,7 @@ WHERE songs.album = {album_id}```
 ### test command
 ```
 http://localhost:10080/notify/graphql?query={songs(album: "ts-fearless"){title,duration}}
+http://localhost:10080/notify/graphql?query={song(album:%22ts-fearless%22){id,title,duration,album{title}}}
 ```
 
 * create command
